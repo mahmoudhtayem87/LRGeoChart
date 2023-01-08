@@ -17,7 +17,6 @@ import * as am5map from '@amcharts/amcharts5/map';
 import * as am4geodata_uae from '@amcharts/amcharts5-geodata/worldHigh';
 
 
-
 @Component({
   selector: 'lr-geo-chart',
   templateUrl: './app.component.html',
@@ -32,6 +31,7 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
   chartdiv: ElementRef<HTMLElement>;
 
   private Country:string = "AE";
+  private Countries = ["AE"];
   private MapColor:string = "#000000";
   private MapBorderColor:string = "#000000";
   public Height:string ="500px";
@@ -48,7 +48,8 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
         "properties": {
           "name": points[index].getAttribute("name"),
           "color": points[index].getAttribute("color"),
-          "description": points[index].getAttribute("description")
+          "description": points[index].getAttribute("description"),
+          "href":points[index].getAttribute("href")?points[index].getAttribute("href"):"null"
         },
         "geometry": {
           "type": "Point",
@@ -64,6 +65,7 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
   {
     const config = this.elementRef.nativeElement.querySelector("config");
     this.Country = config.getAttribute("country")?config.getAttribute("country") : this.Country;
+    this.Countries = this.Country.split(',');
     this.Height = config.getAttribute("height")?config.getAttribute("height") : this.Height;
     this.MapColor = config.getAttribute("map-color")?config.getAttribute("map-color") : this.MapColor;
     this.MapBorderColor = config.getAttribute("border-color")?config.getAttribute("border-color") : this.MapBorderColor;
@@ -117,6 +119,22 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
         width:am5.p100
       }));
 
+      if(this.Country.toLowerCase() === "all")
+      {
+        this.uaeSeries = this.chart.series.push(am5map.MapPolygonSeries.new(this.root, {
+          geoJSON: am4geodata_uae.default,
+          showingTooltip:true,
+          interactive:true
+        }));
+      }else
+      {
+        this.uaeSeries = this.chart.series.push(am5map.MapPolygonSeries.new(this.root, {
+          geoJSON: am4geodata_uae.default,
+          showingTooltip:true,
+          interactive:true,
+          include: this.Countries
+        }));
+      }
       this.uaeSeries = this.chart.series.push(am5map.MapPolygonSeries.new(this.root, {
         geoJSON: am4geodata_uae.default,
         showingTooltip:true,
@@ -138,25 +156,25 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
         })
       );
 
-
       pointSeries.bullets.push( (root:any, series:any, dataItem:any)=> {
-        var container = am5.Container.new(this.root, {});
-
-        var circle = container.children.push(
-          am5.Circle.new(this.root, {
-            radius: 4,
-            tooltipY: 0,
-            fill: am5.color(dataItem.dataContext.color),
-            strokeOpacity: 0,
-            tooltipText: "{title}",
-            tooltipHTML: `<div class="card">
+        var container = am5.Container.new(this.root, {
+          tooltipText: "{title}",
+          tooltipHTML: `<div class="card">
                             <div class="header" style="color:var(--light)!important">
                                 {name}
                             </div>
                             <div class="body text-light"  style="color:var(--light)!important;max-width: 200px">
                                 <p style="color:var(--light)!important">{dataItem.dataContext.description}</p>
+                                {dataItem.dataContext.href}
                             </div>
                           </div>`
+        });
+        var circle = container.children.push(
+          am5.Circle.new(this.root, {
+            radius: 4,
+            tooltipY: 0,
+            fill: am5.color(dataItem.dataContext.color),
+            strokeOpacity: 0
           })
         );
 
@@ -185,6 +203,10 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
           duration: 1500,
           easing: am5.ease.out(am5.ease.linear),
           loops: Infinity
+        });
+        container.events.on("click", function(ev) {
+          // @ts-ignore
+          window.location = ev.target.dataItem.dataContext.href;
         });
 
         return am5.Bullet.new(root, {
