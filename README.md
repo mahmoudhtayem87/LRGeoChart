@@ -1,27 +1,45 @@
 # LRGeoChart
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 15.0.4.
+Liferay GeoChart has been created to show an example of a complex web component which accepts slots to pass content and configuration.
 
-## Development server
+The default component HTML Tag Structure is the following:
+```
+<lr-geo-chart>
+ <config country="AE" map-color="#110101" border-color="#110101" height="70vh" paddingX=”50” paddingY=”50”> </config>
+ <point name="point 1" lat="23.875260" lng="52.501620" color="#0000FF" description=""></point>
+ <point name="point 2" lat="25.0524372" lng="55.4755801" color="#000000" description=""></point>
+ <point name="point 3" lat="24.1680221" lng="55.5239997" color="#001111" description=""></point>
+</lr-geo-chart>
+```
+Inorder to use LRGeoChart please do the following:
+1. Navigate to Global Menu -> Remote Apps
+2. Click on add JS
+3. Provide LRGeoChart built JS URL "Hosted on Liferay or on a remote server"
+4. Navigate to Pages Configuration -> Advanced
+5. Add JavaScript Client Extension and Select LRGeoChart
+6. Create A new Fragment and add the Element Tag
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+Example Fragment Code:
 
-## Code scaffolding
+```aidl
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+[#assign isEdit=false]
+            [#if themeDisplay.isSignedIn()]
+            [#assign req = request.getRequest()]
+            [#assign originalRequest = portalUtil.getOriginalServletRequest(req)]
+            [#if originalRequest.getParameter("p_l_mode")??]
+            [#assign isEdit=true]
+            [/#if]
+            [/#if]
 
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+[#if !isEdit]
+<lr-geo-chart>
+	<config country="AE" map-color="#fFffff" border-color="#FF0000" height="60vh" paddingX="50" paddingY="75"></config>
+[/#if]
+	<lfr-drop-zone>
+		
+	</lfr-drop-zone>
+[#if !isEdit]
+</lr-geo-chart>
+[/#if]
+```
