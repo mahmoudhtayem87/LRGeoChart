@@ -137,13 +137,18 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
           geoJSON: this.points
         })
       );
-      pointSeries.bullets.push((root:any, series:any, dataItem:any)=> {
-        return am5.Bullet.new(this.root, {
-          sprite: am5.Circle.new(this.root, {
-            radius: 5,
-            fillOpacity: 0.5,
+
+
+      pointSeries.bullets.push( (root:any, series:any, dataItem:any)=> {
+        var container = am5.Container.new(this.root, {});
+
+        var circle = container.children.push(
+          am5.Circle.new(this.root, {
+            radius: 4,
+            tooltipY: 0,
             fill: am5.color(dataItem.dataContext.color),
-            cursorOverStyle: "pointer",
+            strokeOpacity: 0,
+            tooltipText: "{title}",
             tooltipHTML: `<div class="card">
                             <div class="header" style="color:var(--light)!important">
                                 {name}
@@ -153,8 +158,40 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
                             </div>
                           </div>`
           })
+        );
+
+        var circle2 = container.children.push(
+          am5.Circle.new(root, {
+            radius: 4,
+            tooltipY: 0,
+            fill: am5.color(dataItem.dataContext.color),
+            strokeOpacity: 0,
+            tooltipText: "{title}"
+          })
+        );
+
+        circle.animate({
+          key: "scale",
+          from: 1,
+          to: 5,
+          duration: 1500,
+          easing: am5.ease.out(am5.ease.linear),
+          loops: Infinity
+        });
+        circle.animate({
+          key: "opacity",
+          from: 1,
+          to: 0,
+          duration: 1500,
+          easing: am5.ease.out(am5.ease.linear),
+          loops: Infinity
+        });
+
+        return am5.Bullet.new(root, {
+          sprite: container
         });
       });
+
     });
   }
 
