@@ -5,10 +5,10 @@ Liferay GeoChart has been created to show an example of a complex web component 
 The default component HTML Tag Structure is the following:
 ```
 <lr-geo-chart>
- <config country="AE" map-color="#110101" border-color="#110101" height="70vh" paddingX=”50” paddingY=”50”> </config>
- <point name="point 1" href="" lat="23.875260" lng="52.501620" color="#0000FF" description=""></point>
- <point name="point 2" href="" lat="25.0524372" lng="55.4755801" color="#000000" description=""></point>
- <point name="point 3" href="" lat="24.1680221" lng="55.5239997" color="#001111" description=""></point>
+  <config country="AE,SA" paddingX="50" paddingY="50" map-color="#000000" border-color="#FF0000" height="70vh" zoomControls="True" wheelZoom="true"></config>
+  <point name="point 1" lat="23.875260" lng="52.501620" color="#0000FF" description="" href="123"></point>
+  <point name="point 2" lat="25.0524372" lng="55.4755801" color="#000000" description="" href="aS"></point>
+  <point name="point 3" lat="24.1680221" lng="55.5239997" color="#001111" description="" href=""></point>
 </lr-geo-chart>
 ```
 Inorder to use LRGeoChart please do the following:
