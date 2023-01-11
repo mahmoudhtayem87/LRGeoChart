@@ -12,10 +12,9 @@ import {
 import {isPlatformBrowser} from '@angular/common';
 
 import * as am5 from '@amcharts/amcharts5';
-import am4themes_animated from '@amcharts/amcharts5/themes/animated';
 import * as am5map from '@amcharts/amcharts5/map';
-import * as am4geodata_uae from '@amcharts/amcharts5-geodata/worldHigh';
-
+import * as am4geodata_uae from '@amcharts/amcharts5-geodata/worldLow';
+import am4themes_animated from '@amcharts/amcharts5/themes/animated';
 
 @Component({
   selector: 'lr-geo-chart',
@@ -37,6 +36,8 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
   public Height:string ="500px";
   private paddingX:number = 50;
   private paddingY = 50;
+  private zoomControls = false;
+  private wheelZoom = false;
 
   getPoints()
   {
@@ -71,6 +72,10 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
     this.MapBorderColor = config.getAttribute("border-color")?config.getAttribute("border-color") : this.MapBorderColor;
     this.paddingX =  config.getAttribute("paddingX")? parseInt(config.getAttribute("paddingX"))  : this.paddingX;
     this.paddingY =  config.getAttribute("paddingY")? parseInt(config.getAttribute("paddingY"))  : this.paddingY;
+    this.zoomControls =  config.getAttribute("zoomControls")?
+      config.getAttribute("zoomControls").toLowerCase() === "true"?true:false  : this.zoomControls;
+    this.wheelZoom =  config.getAttribute("wheelZoom")?
+      config.getAttribute("wheelZoom").toLowerCase() === "true"?true:false  : this.wheelZoom;
   }
 
   private map!: am5map.MapChart;
@@ -103,22 +108,32 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
   ngAfterViewInit()  {
     this.browserOnly(() => {
       this.root = am5.Root.new(this.chartdiv.nativeElement);
-      this.colors = am5.ColorSet.new(this.root, {
-      });
+      this.colors = am5.ColorSet.new(this.root, {});
       this.root.setThemes([
         am4themes_animated.new(this.root)
       ]);
       this.chart = this.root.container.children.push(am5map.MapChart.new(this.root, {
-        panX: "none",
-        panY: "none",
         projection: am5map.geoMercator(),
         paddingTop:this.paddingY,
         paddingBottom:this.paddingY,
         paddingLeft:this.paddingX,
-        paddingRight:this.paddingX,
-        width:am5.p100
+        paddingRight:this.paddingX
       }));
-
+      if (this.zoomControls)
+      this.chart.set("zoomControl", am5map.ZoomControl.new(this.root, {}));
+      if(this.wheelZoom)
+      {
+        this.chart.events.on("wheel", (ev:any)=> {
+          ev.originalEvent.preventDefault();
+          if (ev.originalEvent.wheelDelta > 0 )
+          {
+            this.chart.zoomIn();
+          }else
+          {
+            this.chart.zoomOut();
+          }
+        });
+      }
       if(this.Country.toLowerCase() === "all")
       {
         this.uaeSeries = this.chart.series.push(am5map.MapPolygonSeries.new(this.root, {
@@ -135,85 +150,76 @@ export class AppComponent implements OnInit, AfterContentInit, AfterViewInit  {
           include: this.Countries
         }));
       }
-      this.uaeSeries = this.chart.series.push(am5map.MapPolygonSeries.new(this.root, {
-        geoJSON: am4geodata_uae.default,
-        showingTooltip:true,
-        interactive:true,
-        include: [this.Country]
-      }));
 
-      this.uaeSeries.mapPolygons.template.setAll({
-        stroke: am5.color(this.MapBorderColor),
-        strokeWidth: 2,
-        fillOpacity: 0.5,
-        fill:am5.color(this.MapColor)
-      });
-      // GeoJSON data
 
-      var pointSeries = this.chart.series.push(
-        am5map.MapPointSeries.new(this.root, {
-          geoJSON: this.points
-        })
-      );
 
-      pointSeries.bullets.push( (root:any, series:any, dataItem:any)=> {
-        var container = am5.Container.new(this.root, {
-          tooltipText: "{title}",
-          tooltipHTML: `<div class="card">
-                            <div class="header" style="color:var(--light)!important">
-                                {name}
-                            </div>
-                            <div class="body text-light"  style="color:var(--light)!important;max-width: 200px">
-                                <p style="color:var(--light)!important">{dataItem.dataContext.description}</p>
-                                {dataItem.dataContext.href}
-                            </div>
-                          </div>`
-        });
-        var circle = container.children.push(
-          am5.Circle.new(this.root, {
-            radius: 4,
-            tooltipY: 0,
-            fill: am5.color(dataItem.dataContext.color),
-            strokeOpacity: 0
-          })
-        );
+     this.uaeSeries.mapPolygons.template.setAll({
+       stroke: am5.color(this.MapBorderColor),
+       strokeWidth: 2,
+       fillOpacity: 0.5,
+       fill:am5.color(this.MapColor)
+     });
+     // GeoJSON data
 
-        var circle2 = container.children.push(
-          am5.Circle.new(root, {
-            radius: 4,
-            tooltipY: 0,
-            fill: am5.color(dataItem.dataContext.color),
-            strokeOpacity: 0,
-            tooltipText: "{title}"
-          })
-        );
+     var pointSeries = this.chart.series.push(
+       am5map.MapPointSeries.new(this.root, {
+         geoJSON: this.points
+       })
+     );
 
-        circle.animate({
-          key: "scale",
-          from: 1,
-          to: 5,
-          duration: 1500,
-          easing: am5.ease.out(am5.ease.linear),
-          loops: Infinity
-        });
-        circle.animate({
-          key: "opacity",
-          from: 1,
-          to: 0,
-          duration: 1500,
-          easing: am5.ease.out(am5.ease.linear),
-          loops: Infinity
-        });
-        container.events.on("click", function(ev) {
-          // @ts-ignore
-          window.location = ev.target.dataItem.dataContext.href;
-        });
-
-        return am5.Bullet.new(root, {
-          sprite: container
-        });
-      });
-
+     pointSeries.bullets.push( (root:any, series:any, dataItem:any)=> {
+       var container = am5.Container.new(this.root, {
+         tooltipText: "{title}",
+         tooltipHTML: `<div class="card">
+                           <div class="header" style="color:var(--light)!important">
+                               {name}
+                           </div>
+                           <div class="body text-light"  style="color:var(--light)!important;max-width: 200px">
+                               <p style="color:var(--light)!important">{dataItem.dataContext.description}</p>
+                           </div>
+                         </div>`
+       });
+       var circle = container.children.push(
+         am5.Circle.new(this.root, {
+           radius: 4,
+           tooltipY: 0,
+           fill: am5.color(dataItem.dataContext.color),
+           strokeOpacity: 0
+         })
+       );
+       var circle2 = container.children.push(
+         am5.Circle.new(root, {
+           radius: 4,
+           tooltipY: 0,
+           fill: am5.color(dataItem.dataContext.color),
+           strokeOpacity: 0,
+           tooltipText: "{title}"
+         })
+       );
+       circle.animate({
+         key: "scale",
+         from: 1,
+         to: 5,
+         duration: 1500,
+         easing: am5.ease.out(am5.ease.linear),
+         loops: Infinity
+       });
+       circle.animate({
+         key: "opacity",
+         from: 1,
+         to: 0,
+         duration: 1500,
+         easing: am5.ease.out(am5.ease.linear),
+         loops: Infinity
+       });
+       container.events.on("click", (ev:any)=> {
+         // @ts-ignore
+         window.location = ev.target.dataItem.dataContext.href;
+       });
+       return am5.Bullet.new(root, {
+         sprite: container
+       });
+     });
     });
   }
 
